@@ -5,7 +5,6 @@ A Django web app that imports U.S. federal campaign finance data from the [FEC A
 **Live demo:** https://election-data-explorer.onrender.com/
 *(Hosted on a free plan, so the first visit after a quiet spell can take about a minute to load.)*
 
-![Dashboard](docs/dashboard.png)
 
 ## Features
 
