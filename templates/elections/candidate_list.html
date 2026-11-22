@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Candidates — Election Data Explorer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Candidates</h1>
+    <p>Search and filter federal candidates by name, party, office, or state</p>
+</div>
+
+<form method="get" class="filters">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name...">
+
+    <select name="party">
+        <option value="">All Parties</option>
+        {% for code, label in party_choices %}
+            <option value="{{ code }}" {% if selected_party == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="office">
+        <option value="">All Offices</option>
+        {% for code, label in office_choices %}
+            <option value="{{ code }}" {% if selected_office == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="text" name="state" value="{{ selected_state }}" placeholder="State (e.g. VA)" style="min-width: 100px; max-width: 120px;">
+
+    <select name="sort">
+        <option value="-total_receipts" {% if selected_sort == "-total_receipts" %}selected{% endif %}>Most Raised</option>
+        <option value="total_receipts" {% if selected_sort == "total_receipts" %}selected{% endif %}>Least Raised</option>
+        <option value="name" {% if selected_sort == "name" %}selected{% endif %}>Name A-Z</option>
+        <option value="-name" {% if selected_sort == "-name" %}selected{% endif %}>Name Z-A</option>
+        <option value="-cash_on_hand" {% if selected_sort == "-cash_on_hand" %}selected{% endif %}>Most Cash</option>
+    </select>
+
+    <button type="submit">Filter</button>
+    {% if search_query or selected_party or selected_office or selected_state %}
+        <a href="{% url 'elections:candidate_list' %}" class="btn btn-outline">Clear</a>
+    {% endif %}
+</form>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Candidate</th>
+                <th>Party</th>
+                <th>Office</th>
+                <th>State</th>
+                <th>Year</th>
+                <th class="amount">Raised</th>
+                <th class="amount">Spent</th>
+                <th class="amount">Cash on Hand</th>
+                <th class="amount">Burn Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in candidates %}
+            <tr>
+                <td>
+                    <a href="{% url 'elections:candidate_detail' c.candidate_id %}?cycle={{ c.election_year }}" class="candidate-link">
+                        {{ c.name }}
+                    </a>
+                </td>
+                <td><span class="party-badge party-{{ c.party }}">{{ c.party }}</span></td>
+                <td>{{ c.get_office_display }}</td>
+                <td>{{ c.state }}</td>
+                <td>{{ c.election_year }}</td>
+                <td class="amount">${{ c.total_receipts|floatformat:0|intcomma }}</td>
+                <td class="amount">${{ c.total_disbursements|floatformat:0|intcomma }}</td>
+                <td class="amount">${{ c.cash_on_hand|floatformat:0|intcomma }}</td>
+                <td class="amount">{{ c.burn_rate }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                    No candidates found. Try adjusting your filters.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="pagination">
+    <span class="info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_previous %}
+        <a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">Prev</a>
+    {% endif %}
+    <span class="current">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+        <a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

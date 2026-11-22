@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ candidate.name }} — Election Data Explorer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <p><a href="{% url 'elections:candidate_list' %}" class="candidate-link">&larr; All Candidates</a></p>
+    <h1>
+        {{ candidate.name }}
+        <span class="party-badge party-{{ candidate.party }}" style="font-size: 0.8rem; vertical-align: middle;">
+            {{ candidate.get_party_display }}
+        </span>
+    </h1>
+    <p>
+        {{ candidate.get_office_display }}
+        {% if candidate.state %} &middot; {{ candidate.state }}{% endif %}
+        {% if candidate.district %} District {{ candidate.district }}{% endif %}
+        &middot; {{ candidate.election_year }} Cycle
+        &middot; FEC ID: {{ candidate.candidate_id }}
+    </p>
+</div>
+
+<div class="stats-grid">
+    <div class="card">
+        <div class="card-header">Total Raised</div>
+        <div class="stat-value">${{ candidate.total_receipts|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="card">
+        <div class="card-header">Total Spent</div>
+        <div class="stat-value">${{ candidate.total_disbursements|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="card">
+        <div class="card-header">Cash on Hand</div>
+        <div class="stat-value">${{ candidate.cash_on_hand|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="card">
+        <div class="card-header">Burn Rate</div>
+        <div class="stat-value">{{ candidate.burn_rate }}%</div>
+        <div class="stat-label">of raised funds spent</div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">Fundraising by Election Cycle</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Cycle</th>
+                <th class="amount">Raised</th>
+                <th class="amount">Spent</th>
+                <th class="amount">Cash on Hand</th>
+                <th class="amount">From Individuals</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cycles %}
+            <tr {% if c.pk == candidate.pk %}style="background: rgba(59,130,246,0.08);"{% endif %}>
+                <td>
+                    {% if c.pk == candidate.pk %}
+                        <strong>{{ c.election_year }}</strong>
+                    {% else %}
+                        <a href="{% url 'elections:candidate_detail' c.candidate_id %}?cycle={{ c.election_year }}" class="candidate-link">{{ c.election_year }}</a>
+                    {% endif %}
+                </td>
+                <td class="amount">${{ c.total_receipts|floatformat:0|intcomma }}</td>
+                <td class="amount">${{ c.total_disbursements|floatformat:0|intcomma }}</td>
+                <td class="amount">${{ c.cash_on_hand|floatformat:0|intcomma }}</td>
+                <td class="amount">${{ c.total_individual_contributions|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

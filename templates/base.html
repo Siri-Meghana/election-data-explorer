@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Election Data Explorer{% endblock %}</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --dem: #3b82f6;
+            --rep: #ef4444;
+            --lib: #eab308;
+            --gre: #22c55e;
+            --ind: #a855f7;
+            --success: #22c55e;
+            --warning: #eab308;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            height: 56px;
+        }
+
+        .nav-brand {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-brand span { color: var(--primary); }
+
+        .nav-links { display: flex; gap: 0.25rem; }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: all 0.15s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        /* Main content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .amount { font-variant-numeric: tabular-nums; text-align: right; }
+
+        /* Party badges */
+        .party-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .party-DEM { background: rgba(59,130,246,0.2); color: var(--dem); }
+        .party-REP { background: rgba(239,68,68,0.2); color: var(--rep); }
+        .party-LIB { background: rgba(234,179,8,0.2); color: var(--lib); }
+        .party-GRE { background: rgba(34,197,94,0.2); color: var(--gre); }
+        .party-IND { background: rgba(168,85,247,0.2); color: var(--ind); }
+        .party-OTH { background: rgba(148,163,184,0.2); color: var(--text-muted); }
+
+        /* Forms */
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        input, select {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        input[type="text"] { min-width: 200px; }
+
+        button, .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.15s;
+        }
+
+        button:hover, .btn:hover { background: var(--primary-hover); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .btn-outline:hover { border-color: var(--text-muted); color: var(--text); background: transparent; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 2rem;
+            align-items: center;
+        }
+
+        .pagination a, .pagination span {
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            text-decoration: none;
+        }
+
+        .pagination a {
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+        .pagination a:hover { color: var(--text); border-color: var(--text-muted); }
+        .pagination .current { background: var(--primary); color: white; }
+        .pagination .info { color: var(--text-muted); font-size: 0.8rem; }
+
+        /* Link styles */
+        a.candidate-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        a.candidate-link:hover { text-decoration: underline; }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Bar chart (CSS-only) */
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 24px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: fit-content;
+        }
+
+        /* Detail page sections */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .detail-grid { grid-template-columns: 1fr; }
+            .filters { flex-direction: column; }
+            nav { padding: 0 1rem; }
+            .container { padding: 1rem; }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+        }
+
+        footer a { color: var(--primary); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="{% url 'elections:dashboard' %}" class="nav-brand">
+                <span>&#9733;</span> Election Data Explorer
+            </a>
+            <div class="nav-links">
+                <a href="{% url 'elections:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="{% url 'elections:candidate_list' %}" class="{% if 'candidate' in request.resolver_match.url_name %}active{% endif %}">Candidates</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        Data sourced from the <a href="https://www.fec.gov/" target="_blank">Federal Election Commission</a> via the
+        <a href="https://api.open.fec.gov/" target="_blank">FEC API</a>.
+        Built with Django &amp; Python.
+    </footer>
+</body>
+</html>
